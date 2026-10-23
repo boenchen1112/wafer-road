@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "test": "vitest run",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "balance": "BALANCE=1 vitest run tests/balance --testTimeout=0 --silent=false"
   },
   "license": "MIT",
   "dependencies": {
