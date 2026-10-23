@@ -247,7 +247,8 @@ if (!process.env.SKIP_TIMER) {
   const mine = await host.locator('.actionbar.active').count();
   check('host starts with the move', mine === 1);
   const tStart = Date.now();
-  await host.waitForFunction(() => !document.querySelector('.actionbar.active'), null, { timeout: 45_000 });
+  // (the auto-played move may be a year-end bonus, which keeps the turn open, so watch the log)
+  await host.waitForFunction((n) => document.querySelectorAll('[data-testid=log] .logline').length > n, logBefore, { timeout: 45_000 });
   const secs = (Date.now() - tStart) / 1000;
   const logAfter = await host.locator('[data-testid=log] .logline').count();
   check('turn timer auto-played the idle player', logAfter > logBefore, `after ${secs.toFixed(1)}s (timer 30s)`);
@@ -259,16 +260,27 @@ if (!process.env.SKIP_TIMER) {
 /* 4. disconnect: the guest closes the tab; their dot goes grey; they   */
 /*    come back through the same link and are seated again             */
 /* ------------------------------------------------------------------ */
+// wait for the guest's own turn, then drop them mid-turn
+await guest.waitForSelector('.actionbar.active', { timeout: 60_000 });
 await guest.close();
 await host.waitForFunction(() => document.querySelector('[data-testid="conn-1"]')?.getAttribute('data-connected') === '0', null, { timeout: 15_000 });
 check('closed tab shows a grey connection dot to the others', true);
+await host.waitForSelector('[data-testid=clock].takeover', { timeout: 10_000 });
+check('others see the takeover countdown for the absent player', true);
 await shot(host, '14-desktop-guest-disconnected');
+const tDrop = Date.now();
+await host.waitForSelector('.badge.warn', { timeout: 40_000 });
+const takeoverSecs = (Date.now() - tDrop) / 1000;
+check('a Normal bot takes over the absent player after ~20 s', takeoverSecs >= 14 && takeoverSecs <= 30, `${takeoverSecs.toFixed(1)}s`);
+await shot(host, '14b-desktop-bot-covering');
 const guest2 = await guestCtx.newPage();
 await guest2.goto(`${WEB}?room=${code}`);
 await guest2.waitForSelector('[data-testid=hand] .card', { timeout: 15_000 });
 check('rejoining from a fresh tab restores the seat (token in localStorage)', (await guest2.locator('.panel.me').count()) === 1);
 await host.waitForFunction(() => document.querySelector('[data-testid="conn-1"]')?.getAttribute('data-connected') === '1', null, { timeout: 15_000 });
 check('dot turns green again', true);
+await host.waitForFunction(() => !document.querySelector('.badge.warn'), null, { timeout: 10_000 });
+check('control returns to the player (bot badge gone)', true);
 
 /* ------------------------------------------------------------------ */
 /* 5. language + leaving                                                */

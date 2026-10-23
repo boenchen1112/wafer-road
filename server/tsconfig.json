@@ -13,5 +13,5 @@
     "noEmit": true,
     "types": ["@cloudflare/workers-types"]
   },
-  "include": ["src", "test", "../src/engine", "../src/ai", "../src/online"]
+  "include": ["src", "test", "../src/engine", "../src/ai", "../src/online/protocol.ts", "../src/online/view.ts"]
 }

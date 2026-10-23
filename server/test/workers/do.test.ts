@@ -1,5 +1,5 @@
 import { env, exports } from 'cloudflare:workers';
-import { evictDurableObject, runInDurableObject } from 'cloudflare:test';
+import { evictDurableObject, runDurableObjectAlarm, runInDurableObject } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
 import type { RoomView, ServerMsg } from '../../../src/online/protocol';
 
@@ -190,5 +190,27 @@ describe('room over WebSocket', () => {
     await c.until(() => c.room());
     for (let i = 0; i < 80; i++) c.send({ t: 'nope' });
     await c.until(() => c.msgs.some((m) => m.t === 'error' && m.code === 'rate_limited') || undefined);
+  });
+
+  it('deletes the room from storage (and closes sockets) when the idle alarm fires after 2 hours', async () => {
+    const { code, token } = await createRoom();
+    const host = await Client.open(code);
+    host.send({ t: 'join', name: 'Host', token });
+    await host.until(() => host.room());
+    const stub = env.ROOMS.get(env.ROOMS.idFromName(code));
+    // pretend the room has been idle for 3 hours
+    await runInDurableObject(stub, async (instance: unknown, state) => {
+      const room = (instance as { room: { data: { lastActivity: number } } }).room;
+      room.data.lastActivity -= 3 * 3600_000;
+      await state.storage.put('room', room.data);
+    });
+    expect(await runDurableObjectAlarm(stub)).toBe(true);
+    await host.until(() => host.closed ?? undefined);
+    const left = await runInDurableObject(stub, async (_i, state) => state.storage.get('room'));
+    expect(left).toBeUndefined();
+    // a late joiner now sees an unknown room
+    const late = await Client.open(code);
+    await late.until(() => late.error());
+    expect(late.error()!.code).toBe('no_room');
   });
 });

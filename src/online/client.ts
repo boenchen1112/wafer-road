@@ -497,7 +497,13 @@ export function onlineModel(o: OnlineState): TableModel | null {
     };
   });
   const curBot = players[g.current].bot || players[g.current].covered;
-  const clock = room.clock && room.phase === 'playing' ? { kind: room.clock.kind, seat: room.clock.seat, at: room.clock.at - o.offset } : null;
+  let clock: TableModel['clock'] = null;
+  if (room.clock && room.phase === 'playing') {
+    let at = room.clock.at - o.offset;
+    // network latency in the offset estimate must never show more time than the timer allows
+    if (room.clock.kind === 'timeout') at = Math.min(at, Date.now() + room.settings.timer * 1000);
+    clock = { kind: room.clock.kind, seat: room.clock.seat, at };
+  }
   return {
     mode: 'online',
     gameKey: o.gameNo,
