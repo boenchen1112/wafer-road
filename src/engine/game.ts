@@ -71,7 +71,7 @@ export function createGame(config: GameConfig, seed: number): GameState {
   const s: GameState = {
     config: { ...config },
     players: [],
-    deck: buildDeck(),
+    deck: buildDeck(config.deckCounts),
     discard: [],
     current: 0,
     phase: 'action',

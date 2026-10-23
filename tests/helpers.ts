@@ -1,4 +1,4 @@
-import { allCards, createGame, type Card, type CardKind, type EndMode, type GameState } from '../src/engine';
+import { PRINTED_DECK_COUNTS, allCards, createGame, type Card, type CardKind, type EndMode, type GameState } from '../src/engine';
 
 export interface Spec {
   players?: number;
@@ -14,9 +14,9 @@ export interface Spec {
   phase?: GameState['phase'];
 }
 
-/** Build a custom state while conserving all 68 cards. Players not in `hands` get filler hands. */
+/** Build a custom state (on the printed 68-card deck, so fixtures have enough of every kind) while conserving all cards. Players not in `hands` get filler hands. */
 export function scenario(spec: Spec = {}, seed = 1): GameState {
-  const base = createGame({ numPlayers: spec.players ?? 3, endMode: spec.endMode ?? 'timed' }, seed);
+  const base = createGame({ numPlayers: spec.players ?? 3, endMode: spec.endMode ?? 'timed', deckCounts: PRINTED_DECK_COUNTS }, seed);
   const s = structuredClone(base);
   const pool: Card[] = allCards(s);
   const take = (kind: CardKind): Card => {

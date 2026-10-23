@@ -5,6 +5,25 @@ export const WAFERS_PER_PLAYER = 2;
 export const COMPLETE_STEP = 4;
 
 export const DECK_COUNTS: Record<CardKind, number> = {
+  thinFilm: 19,
+  photolithography: 8,
+  doping: 7,
+  metallization: 5,
+  foundry: 2,
+  agingEquipment: 4,
+  exposureError: 1,
+  ionImplant: 1,
+  blackout: 2,
+  toxicGas: 4,
+  rookieEngineer: 2,
+  blockedExit: 4,
+  generator: 3,
+  emergencyExit: 4,
+  yearEndBonus: 2,
+};
+
+/** The deck as printed in the first physical edition (before simulation balancing, see docs/BALANCE.md). */
+export const PRINTED_DECK_COUNTS: Record<CardKind, number> = {
   thinFilm: 12,
   photolithography: 9,
   doping: 7,
@@ -56,11 +75,13 @@ export function needsPlayerTarget(k: CardKind): boolean {
 }
 
 /** Unsorted, deterministic deck list with ids 0..67. */
-export function buildDeck(): Card[] {
+export type DeckCounts = Record<CardKind, number>;
+
+export function buildDeck(counts: DeckCounts = DECK_COUNTS): Card[] {
   const deck: Card[] = [];
   let id = 0;
   for (const kind of KIND_ORDER) {
-    for (let i = 0; i < DECK_COUNTS[kind]; i++) deck.push({ id: id++, kind });
+    for (let i = 0; i < counts[kind]; i++) deck.push({ id: id++, kind });
   }
   return deck;
 }
