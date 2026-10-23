@@ -1,25 +1,15 @@
 import { useEffect, useState } from 'preact/hooks';
 import { chooseAction, type BotLevel } from '../ai';
-import { applyAction, createGame, type Action, type CardKind, type EndMode, type GameEvent, type GameState, type Target } from '../engine';
+import { applyAction, createGame, legalActions, type Action, type EndMode, type GameEvent, type GameState } from '../engine';
+import { t } from '../i18n';
+import type { Banner, LogItem, TableModel } from './model';
 import * as sfx from '../audio/sfx';
+
+export type { Banner, LogItem } from './model';
 
 export interface Seat {
   kind: 'human' | 'bot';
   level: BotLevel;
-}
-
-export interface LogItem {
-  id: number;
-  ev: GameEvent;
-}
-
-export interface Banner {
-  id: number;
-  actor: number;
-  card: CardKind;
-  target?: Target;
-  /** true when this was a discard (face-down information only) */
-  discard?: boolean;
 }
 
 export interface Session {
@@ -131,7 +121,7 @@ function pushLog(events: GameEvent[]): void {
   session.log = [...session.log, ...items].slice(-500);
 }
 
-function playSounds(events: GameEvent[]): void {
+export function playSounds(events: GameEvent[]): void {
   for (const e of events) {
     switch (e.type) {
       case 'advance':
@@ -250,4 +240,58 @@ function afterChange(): void {
     const a = chooseAction(cs.state, cur, cs.seats[cur].level);
     dispatch(a);
   }, BOT_DELAY_MS);
+}
+
+/* ------------------------------------------------------------------ */
+/* view model                                                          */
+/* ------------------------------------------------------------------ */
+
+let actionCache: { gameId: number; rev: number; viewer: number; actions: Action[] } | null = null;
+
+/** Adapter: local hotseat / bot session -> table view model. */
+export function localModel(s: Session): TableModel {
+  const st = s.state;
+  const myTurn = !st.result && st.current === s.viewer && s.seats[s.viewer].kind === 'human' && s.handoff === null && s.handVisible;
+  let actions: Action[] = [];
+  if (myTurn) {
+    if (!actionCache || actionCache.gameId !== s.gameId || actionCache.rev !== s.rev || actionCache.viewer !== s.viewer) {
+      actionCache = { gameId: s.gameId, rev: s.rev, viewer: s.viewer, actions: legalActions(st, s.viewer) };
+    }
+    actions = actionCache.actions;
+  }
+  return {
+    mode: 'local',
+    gameKey: s.gameId,
+    players: st.players.map((p, i) => ({
+      id: i,
+      name: t(s.seats[i].kind === 'human' ? 'lobby.name' : 'lobby.bot', { n: i + 1 }),
+      bot: s.seats[i].kind === 'bot',
+      handCount: p.hand.length,
+      wafers: [p.wafers[0], p.wafers[1]],
+      protections: p.protections,
+      connected: null,
+      covered: false,
+    })),
+    viewer: s.viewer,
+    current: st.current,
+    phase: st.phase,
+    deckCount: st.deck.length,
+    discardCount: st.discard.length,
+    finalTurnsLeft: st.finalTurnsLeft,
+    result: st.result,
+    hand: st.players[s.viewer].hand,
+    handVisible: s.handVisible,
+    canAct: myTurn,
+    actions,
+    handoff: s.handoff,
+    thinking: s.thinking,
+    banner: s.banner,
+    log: s.log,
+    rev: s.rev,
+    clock: null,
+    onAction: dispatch,
+    onQuit: quitGame,
+    onReveal: revealHand,
+    onPlayAgain: replay,
+  };
 }

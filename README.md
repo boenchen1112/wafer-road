@@ -26,6 +26,12 @@ npm run preview   # 預覽建置結果
 
 需要 Node.js 20 以上。部署：推送到 `main` 後，GitHub Actions 會自動建置並發佈到 GitHub Pages。
 
+### 線上多人
+
+首頁選「線上遊戲 Online」：建立房間會得到 4 個字母的房間代碼與分享連結（`https://boenchen1112.github.io/wafer-road/?room=ABCD`），朋友開連結即可加入，不需要帳號。房主可設定 2～5 個座位（真人／簡單電腦／普通電腦）、結束方式與回合計時（關閉／30／60／90 秒）；斷線或重新整理會自動回到原座位，輪到斷線玩家時由電腦代打。伺服器（Cloudflare Workers + Durable Object）使用同一份遊戲引擎，並且只會傳給每位玩家他自己看得到的資訊。
+
+部署與設定步驟請見 **[docs/ONLINE.md](docs/ONLINE.md)**。未設定伺服器時，「線上遊戲」會停用，本機遊戲不受影響。
+
 ### 規則摘要
 
 - 每位玩家有 2 片晶圓（第 0 階），起手 4 張牌；牌堆共 68 張（數位版採用模擬平衡後的配比，見 [docs/BALANCE.md](docs/BALANCE.md)）。
@@ -42,11 +48,14 @@ npm run preview   # 預覽建置結果
 
 ### 專案結構
 
-- `src/engine/` — 純函式、可決定性（seed）的遊戲引擎，無 DOM；`createGame`、`legalActions`、`applyAction`。可在伺服器上以同一份程式碼運行（日後線上多人）。
+- `src/engine/` — 純函式、可決定性（seed）的遊戲引擎，無 DOM；`createGame`、`legalActions`、`applyAction`。線上多人模式的伺服器也運行同一份程式碼。
+- `src/online/` — 線上通訊協定、玩家視角遮蔽（不洩漏他人手牌／牌堆／種子）與瀏覽器端連線。
+- `server/` — Cloudflare Worker + Durable Object（獨立的 package.json／wrangler 設定與測試）。
 - `src/ai/` — 電腦玩家（簡單／普通），只呼叫引擎 API。
 - `src/ui/`、`src/i18n/`、`src/audio/` — Preact 介面、繁中／英文字典、WebAudio 合成音效。
 - `tests/` — Vitest：每張卡的效果、保護、結束條件、計分，以及數千局隨機對局的 fuzz 測試。
 - `scripts/e2e.mjs` — Playwright 自動遊玩並截圖（`npm run build && node scripts/e2e.mjs`）。
+- `scripts/e2e-online.mjs` — 兩個瀏覽器的線上模式端對端測試（`SPAWN=1 node scripts/e2e-online.mjs`，需要先在 `server/` 執行 `npm ci`）。
 
 ### 製作名單
 
@@ -81,6 +90,12 @@ npm run preview   # preview the production build
 
 Requires Node.js 20+. Deployment: pushing to `main` builds and publishes to GitHub Pages through GitHub Actions.
 
+### Online multiplayer
+
+Choose "線上遊戲 Online" on the home page: creating a room gives you a 4-letter code and a share link (`https://boenchen1112.github.io/wafer-road/?room=ABCD`); friends join from the link, no accounts. The host sets 2-5 seats (human / Easy bot / Normal bot), the end mode and a turn timer (Off / 30 / 60 / 90 s). Refreshing or dropping offline rejoins your seat, and a bot covers a disconnected player's turn. The server (Cloudflare Workers + one Durable Object per room) runs the same game engine and sends each player only what they are allowed to see.
+
+Setup and deployment steps: **[docs/ONLINE.md](docs/ONLINE.md)**. Without a configured server the Online tab is disabled and local play is unaffected.
+
 ### Rules summary
 
 - Each player has 2 wafers (step 0) and starts with 4 cards; the deck has 68 cards (the digital version uses simulation-balanced counts, see [docs/BALANCE.md](docs/BALANCE.md)).
@@ -97,11 +112,14 @@ The full rules and a card reference are in the in-game "How to Play" page, plus 
 
 ### Project layout
 
-- `src/engine/` — pure, deterministic (seeded) game engine with no DOM: `createGame`, `legalActions`, `applyAction`. The same code can later run on a server for online multiplayer.
+- `src/engine/` — pure, deterministic (seeded) game engine with no DOM: `createGame`, `legalActions`, `applyAction`. The online-multiplayer server runs this very same code.
+- `src/online/` — online wire protocol, per-player redaction (no leaking of other hands / deck order / seed) and the browser connection client.
+- `server/` — Cloudflare Worker + Durable Object (own package.json, wrangler config and tests).
 - `src/ai/` — bots (Easy / Normal) that only call the engine API.
 - `src/ui/`, `src/i18n/`, `src/audio/` — Preact UI, zh-TW / en dictionaries, WebAudio-synthesised sound.
 - `tests/` — Vitest: every card effect, protection, end conditions, scoring, and a fuzz test over thousands of random games.
 - `scripts/e2e.mjs` — Playwright script that plays games and takes screenshots (`npm run build && node scripts/e2e.mjs`).
+- `scripts/e2e-online.mjs` — two-browser online end-to-end test (`SPAWN=1 node scripts/e2e-online.mjs`; run `npm ci` in `server/` first).
 
 ### Credits
 

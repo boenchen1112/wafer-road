@@ -1,0 +1,53 @@
+name: Deploy server (Cloudflare Workers)
+
+# Deploys the online-multiplayer Worker + Durable Object. The server runs the same
+# game engine and bots as the client, so engine/AI changes redeploy it too.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server/**'
+      - 'src/engine/**'
+      - 'src/ai/**'
+      - 'src/online/**'
+      - '.github/workflows/deploy-server.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-server
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci
+      - name: Type-check and unit-test before deploying
+        run: |
+          npm run typecheck
+          npm run test:unit
+      - name: Deploy to Cloudflare
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: server
+          command: deploy
+      - name: Show the server URL
+        if: always()
+        run: |
+          echo "Deployment URL: ${{ steps.deploy.outputs.deployment-url }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Set the repo Actions variable WAFER_SERVER_URL to the wss:// form of that URL, then re-run the Pages deploy." >> "$GITHUB_STEP_SUMMARY"

@@ -2,13 +2,17 @@ import { useState } from 'preact/hooks';
 import type { EndMode } from '../engine';
 import { t, useLang } from '../i18n';
 import { TopControls } from './Controls';
+import { onlineConfigured } from '../online/client';
+import { OnlineEntry } from './Online';
 import { startGame, type Seat } from './store';
 import * as sfx from '../audio/sfx';
 
 type SeatChoice = 'human' | 'easy' | 'normal';
 
-export function Lobby({ go }: { go: (p: 'howto' | 'process') => void }) {
+export function Lobby({ go, initialTab = 'local' }: { go: (p: 'howto' | 'process') => void; initialTab?: 'local' | 'online' }) {
   const lang = useLang();
+  const configured = onlineConfigured();
+  const [tab, setTab] = useState<'local' | 'online'>(initialTab === 'online' && configured ? 'online' : 'local');
   const [n, setN] = useState(3);
   const [seats, setSeats] = useState<SeatChoice[]>(['human', 'normal', 'normal', 'easy', 'easy']);
   const [mode, setMode] = useState<EndMode>('timed');
@@ -39,6 +43,30 @@ export function Lobby({ go }: { go: (p: 'howto' | 'process') => void }) {
         <p class="logo-en">WAFER ROAD</p>
       </header>
 
+      <div class="tabs" role="tablist">
+        <button role="tab" class={`tab ${tab === 'local' ? 'on' : ''}`} aria-selected={tab === 'local'} data-testid="tab-local" onClick={() => setTab('local')}>
+          {t('online.tab.local', undefined, lang)}
+        </button>
+        <button
+          role="tab"
+          class={`tab ${tab === 'online' ? 'on' : ''}`}
+          aria-selected={tab === 'online'}
+          disabled={!configured}
+          data-testid="tab-online"
+          onClick={() => setTab('online')}
+        >
+          {t('online.tab.online', undefined, lang)}
+        </button>
+      </div>
+      {!configured && (
+        <p class="note muted center" data-testid="online-unconfigured">
+          {t('online.notConfigured', undefined, lang)}
+        </p>
+      )}
+
+      {tab === 'online' ? (
+        <OnlineEntry />
+      ) : (
       <section class="card-panel">
         <h2>{t('lobby.players', undefined, lang)}</h2>
         <div class="seg" role="radiogroup" aria-label={t('lobby.players', undefined, lang)}>
@@ -84,6 +112,7 @@ export function Lobby({ go }: { go: (p: 'howto' | 'process') => void }) {
           {t('lobby.start', undefined, lang)}
         </button>
       </section>
+      )}
 
       <nav class="links">
         <button class="btn" onClick={() => go('howto')}>
