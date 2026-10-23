@@ -9,12 +9,13 @@ import {
   legalActions,
   scoreOf,
   type Action,
+  type Target,
   type CardKind,
   type GameState,
 } from '../src/engine';
 import { cardOf, scenario } from './helpers';
 
-const play = (s: GameState, pid: number, kind: CardKind, target?: Action extends infer A ? any : never) =>
+const play = (s: GameState, pid: number, kind: CardKind, target?: Target) =>
   applyAction(s, { type: 'play', player: pid, cardId: cardOf(s, pid, kind).id, target });
 
 const FILL: CardKind[] = ['yearEndBonus', 'yearEndBonus', 'yearEndBonus', 'blockedExit'];
