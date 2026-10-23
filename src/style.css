@@ -1224,3 +1224,259 @@ h3 {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---------- online (v2) ---------- */
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+.tab {
+  flex: 1;
+  min-height: 48px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  font-weight: 800;
+  font-size: 16px;
+  cursor: pointer;
+}
+.tab.on {
+  background: rgba(127, 214, 176, 0.16);
+  border-color: var(--mint);
+  color: var(--mint);
+}
+.tab:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.note.muted {
+  color: var(--muted);
+}
+.note.warn {
+  color: var(--gold);
+}
+.note.center {
+  text-align: center;
+  margin: -4px 0 12px;
+}
+.text-input {
+  width: 100%;
+  min-height: 48px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-size: 18px;
+  padding: 0 14px;
+}
+.text-input:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: 1px;
+}
+.join-row {
+  display: flex;
+  gap: 8px;
+}
+.code-input {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  letter-spacing: 0.35em;
+  font-weight: 900;
+  font-size: 24px;
+  text-transform: uppercase;
+}
+.hero.compact {
+  padding: 4px 0 16px;
+}
+.room-code {
+  display: inline-block;
+  margin: 4px 0 10px;
+  padding: 4px 22px 4px 30px;
+  font-size: clamp(44px, 14vw, 72px);
+  line-height: 1.1;
+  font-weight: 900;
+  letter-spacing: 0.3em;
+  color: var(--mint);
+  background: var(--bg2);
+  border: 1px dashed var(--mint-dim);
+  border-radius: 16px;
+  user-select: all;
+}
+.share-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.link-line {
+  margin: 10px auto 0;
+  max-width: 100%;
+  color: var(--muted);
+  font-size: 12px;
+  word-break: break-all;
+}
+h3.sub {
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  margin: 16px 0 8px;
+}
+h3.sub:first-of-type {
+  margin-top: 0;
+}
+.seg-btn.small {
+  font-size: 15px;
+  min-height: 44px;
+  padding: 0 4px;
+}
+.seg-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.members {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.member {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+.member.empty {
+  border-style: dashed;
+  background: transparent;
+}
+.seat-no {
+  flex: none;
+  min-width: 52px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.mname {
+  font-weight: 700;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.mname small {
+  color: var(--muted);
+  font-weight: 400;
+}
+.mname.wait {
+  color: var(--muted);
+  font-weight: 400;
+}
+.badge.host {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+.badge.warn {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+.conn-dot {
+  flex: none;
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+.conn-dot.on {
+  background: #4ade80;
+  box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.25);
+}
+.conn-dot.off {
+  background: #6b7090;
+  box-shadow: 0 0 0 2px rgba(107, 112, 144, 0.3);
+}
+.summary {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 14px;
+  margin: 0;
+}
+.summary dt {
+  color: var(--muted);
+}
+.summary dd {
+  margin: 0;
+  font-weight: 700;
+}
+.fatal p {
+  margin: 8px 0 0;
+}
+.conn-banner {
+  flex: none;
+  background: #5b4a14;
+  color: #ffe9a8;
+  text-align: center;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 4px 8px;
+}
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  max-width: min(92vw, 460px);
+  z-index: 60;
+  background: #4a2530;
+  border: 1px solid var(--danger);
+  color: #ffe1e5;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-weight: 700;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+.chip.clock {
+  color: var(--text);
+  border-color: var(--mint-dim);
+}
+.chip.clock.takeover {
+  border-color: var(--gold);
+}
+.chip.clock.urgent {
+  border-color: var(--danger);
+  color: #ffd0d5;
+  animation: blink 1s infinite;
+}
+.clock-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+.panel-head .conn-dot {
+  margin-left: -2px;
+}
+
+@media (max-width: 520px) {
+  /* online adds a clock chip to the top bar: tighten it so everything stays on one row */
+  .topbar .btn.sm {
+    padding: 4px 8px;
+  }
+  .topbar .chip {
+    padding: 2px 7px;
+    gap: 4px;
+  }
+  .topbar .counts {
+    gap: 4px;
+  }
+  .toast {
+    bottom: calc(150px + env(safe-area-inset-bottom));
+  }
+}

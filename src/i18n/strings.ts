@@ -1,3 +1,5 @@
+import { enOnline, zhOnline } from './online';
+
 export type Lang = 'zh-TW' | 'en';
 
 type Dict = Record<string, string>;
@@ -116,6 +118,7 @@ export const zh: Dict = {
   'howto.title': '如何遊玩',
   'howto.cards': '卡牌一覽',
   'process.title': '製程原理',
+  ...zhOnline,
 };
 
 export const en: Dict = {
@@ -232,4 +235,5 @@ export const en: Dict = {
   'howto.title': 'How to Play',
   'howto.cards': 'Card reference',
   'process.title': 'Process Principles',
+  ...enOnline,
 };

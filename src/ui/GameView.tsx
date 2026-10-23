@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { countKind, legalActions, scoreOf, type Action, type CardKind, type GameState, type Target } from '../engine';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { countKind, type CardKind, type GameState, type Target } from '../engine';
 import * as sfx from '../audio/sfx';
 import { artUrl, cardName, cardText, CARD_META } from '../i18n/cards';
 import { t, useLang, type Lang } from '../i18n';
-import { formatEvent, seatName } from './format';
+import { formatEvent } from './format';
+import { waferPoints, type TableModel } from './model';
 import { Card, ProtectionChip, Wafer } from './parts';
-import { dispatch, quitGame, replay, revealHand, type Session } from './store';
 import { TopControls } from './Controls';
 
 const NO_TARGET_KINDS: CardKind[] = ['generator', 'emergencyExit', 'blackout', 'yearEndBonus'];
@@ -14,21 +14,20 @@ function tkey(t: Target | undefined): string {
   return t ? `${t.player}:${t.wafer ?? ''}` : '';
 }
 
-export function GameView({ s }: { s: Session }) {
+export function GameView({ m }: { m: TableModel }) {
   const lang = useLang();
-  const st = s.state;
-  const me = s.viewer;
+  const st = m;
+  const me = m.viewer;
   const [sel, setSel] = useState<number | null>(null);
   const [logOpen, setLogOpen] = useState(false);
 
-  const myTurnHuman =
-    !st.result && st.current === me && s.seats[me].kind === 'human' && s.handoff === null && s.handVisible;
-  const actions = useMemo<Action[]>(() => (myTurnHuman ? legalActions(st, me) : []), [st, me, myTurnHuman]);
+  const myTurnHuman = m.canAct;
+  const actions = m.actions;
 
   // clear selection when the state moves on
-  useEffect(() => setSel(null), [s.rev, myTurnHuman]);
+  useEffect(() => setSel(null), [m.rev, myTurnHuman]);
 
-  const selCard = sel !== null ? st.players[me].hand.find((c) => c.id === sel) : undefined;
+  const selCard = sel !== null ? m.hand.find((c) => c.id === sel) : undefined;
   const selPlays = selCard ? actions.filter((a) => a.type === 'play' && a.cardId === selCard.id) : [];
   const selDiscard = selCard ? actions.find((a) => a.type === 'discard' && a.cardId === selCard.id) : undefined;
   const selNeedsTarget = !!selCard && !NO_TARGET_KINDS.includes(selCard.kind);
@@ -37,13 +36,13 @@ export function GameView({ s }: { s: Session }) {
   const pickTarget = (target: Target) => {
     if (!selCard) return;
     const a = selPlays.find((x) => x.type === 'play' && tkey(x.target) === tkey(target));
-    if (a) dispatch(a);
+    if (a) m.onAction(a);
   };
 
   const order: number[] = [];
   for (let k = 1; k < st.players.length; k++) order.push((me + k) % st.players.length);
 
-  const hand = st.players[me].hand;
+  const hand = m.hand;
   const knownIds = useRef<Set<number>>(new Set());
   const entering = new Set(hand.filter((c) => !knownIds.current.has(c.id)).map((c) => c.id));
   useEffect(() => {
@@ -53,8 +52,9 @@ export function GameView({ s }: { s: Session }) {
   const prompt = (() => {
     if (st.result) return '';
     if (!myTurnHuman) {
-      if (s.seats[st.current].kind === 'bot') return `${seatName(s.seats, st.current, lang)} ${t('game.thinking', undefined, lang)}`;
-      return t('game.turnOf', { name: seatName(s.seats, st.current, lang) }, lang);
+      const cur = m.players[st.current];
+      if (m.thinking !== null) return `${cur.name} ${t('game.thinking', undefined, lang)}`;
+      return t('game.turnOf', { name: cur.name }, lang);
     }
     if (st.phase === 'bonusDiscard') return t('game.bonusDiscard', undefined, lang);
     if (st.phase === 'bonus') return t('game.bonusPhase', undefined, lang);
@@ -67,12 +67,13 @@ export function GameView({ s }: { s: Session }) {
         <div class="brand-sm">{t('app.title', undefined, lang)}</div>
         <div class="counts">
           <span class="chip" title={t('game.deck', undefined, lang)}>
-            <i class="ico deck" /> <span class="long">{t('game.deck', undefined, lang)}</span> <b data-testid="deck-count">{st.deck.length}</b>
+            <i class="ico deck" /> <span class="long">{t('game.deck', undefined, lang)}</span> <b data-testid="deck-count">{m.deckCount}</b>
           </span>
           <span class="chip" title={t('game.discard', undefined, lang)}>
-            <i class="ico disc" /> <span class="long">{t('game.discard', undefined, lang)}</span> <b data-testid="discard-count">{st.discard.length}</b>
+            <i class="ico disc" /> <span class="long">{t('game.discard', undefined, lang)}</span> <b data-testid="discard-count">{m.discardCount}</b>
           </span>
         </div>
+        {m.clock && <ClockChip clock={m.clock} m={m} lang={lang} />}
         <div class="spacer" />
         <button class="btn ghost sm" onClick={() => setLogOpen((v) => !v)} aria-expanded={logOpen}>
           {logOpen ? t('game.hideLog', undefined, lang) : t('game.showLog', undefined, lang)}
@@ -81,10 +82,10 @@ export function GameView({ s }: { s: Session }) {
         <button
           class="btn ghost sm"
           onClick={() => {
-            if (st.result || window.confirm(t('game.quitConfirm', undefined, lang))) quitGame();
+            if (st.result || window.confirm(t(m.mode === 'online' ? 'online.leaveConfirm' : 'game.quitConfirm', undefined, lang))) m.onQuit();
           }}
         >
-          <span class="long">{t('game.quit', undefined, lang)}</span>
+          <span class="long">{t(m.mode === 'online' ? 'online.leave' : 'game.quit', undefined, lang)}</span>
           <span class="short" aria-hidden="true">✕</span>
         </button>
       </header>
@@ -95,13 +96,19 @@ export function GameView({ s }: { s: Session }) {
         </div>
       )}
 
+      {m.link && m.link !== 'open' && (
+        <div class="conn-banner" role="status" data-testid="conn-banner">
+          {t(m.link === 'connecting' ? 'online.connecting' : 'online.reconnecting', undefined, lang)}
+        </div>
+      )}
+
       <div class="table-wrap">
         <main class="table" data-testid="table">
           <section class="opps" data-count={order.length}>
             {order.map((i) => (
               <PlayerPanel
                 key={i}
-                s={s}
+                m={m}
                 i={i}
                 lang={lang}
                 targetKeys={targetKeys}
@@ -111,7 +118,7 @@ export function GameView({ s }: { s: Session }) {
           </section>
 
           <section class="mine">
-            <PlayerPanel s={s} i={me} lang={lang} targetKeys={targetKeys} onPick={pickTarget} mine />
+            <PlayerPanel m={m} i={me} lang={lang} targetKeys={targetKeys} onPick={pickTarget} mine />
           </section>
 
           <div class="dock">
@@ -127,21 +134,21 @@ export function GameView({ s }: { s: Session }) {
                 noTargets={selNeedsTarget && selPlays.length === 0}
                 onPlay={() => {
                   const a = selPlays[0];
-                  if (a) dispatch(a);
+                  if (a) m.onAction(a);
                 }}
-                onDiscard={() => selDiscard && dispatch(selDiscard)}
+                onDiscard={() => selDiscard && m.onAction(selDiscard)}
                 onCancel={() => setSel(null)}
               />
             ) : (
               <div class="prompt">
-                <span class={`dot ${s.thinking !== null ? 'think' : ''}`} />
+                <span class={`dot ${m.thinking !== null ? 'think' : ''}`} />
                 {prompt}
               </div>
             )}
           </section>
 
           <section class="hand-area" aria-label={t('game.hand', undefined, lang)}>
-            {!s.handVisible ? (
+            {!m.handVisible ? (
               <div class="hand hidden-hand" style={{ '--n': hand.length }}>
                 {hand.map((c) => (
                   <Card key={c.id} back lang={lang} class="hand-card" />
@@ -181,13 +188,13 @@ export function GameView({ s }: { s: Session }) {
 
         <aside class="logpanel" aria-label={t('game.log', undefined, lang)}>
           <h3>{t('game.log', undefined, lang)}</h3>
-          <LogList s={s} lang={lang} />
+          <LogList m={m} lang={lang} />
         </aside>
       </div>
 
-      {s.banner && <PlayBanner s={s} lang={lang} />}
-      {s.handoff !== null && <Handoff s={s} lang={lang} />}
-      {st.result && <EndScreen s={s} lang={lang} />}
+      {m.banner && <PlayBanner m={m} lang={lang} />}
+      {m.handoff !== null && <Handoff m={m} lang={lang} />}
+      {st.result && <EndScreen m={m} lang={lang} />}
     </div>
   );
 }
@@ -237,20 +244,20 @@ function SelectedInfo(props: {
 /* ---------------------------------------------------------------- */
 
 function PlayerPanel(props: {
-  s: Session;
+  m: TableModel;
   i: number;
   lang: Lang;
   mine?: boolean;
   targetKeys: Set<string>;
   onPick: (t: Target) => void;
 }) {
-  const { s, i, lang, mine, targetKeys, onPick } = props;
-  const st = s.state;
-  const p = st.players[i];
+  const { m, i, lang, mine, targetKeys, onPick } = props;
+  const st = m;
+  const p = m.players[i];
   const active = st.current === i && !st.result;
   const playerTargetable = targetKeys.has(`${i}:`);
-  const name = seatName(s.seats, i, lang);
-  const isBot = s.seats[i].kind === 'bot';
+  const name = p.name;
+  const isBot = p.bot;
   const gens = countKind(p.protections, 'generator');
   const exits = countKind(p.protections, 'emergencyExit');
   return (
@@ -267,12 +274,23 @@ function PlayerPanel(props: {
       <div class="panel-head">
         <span class="pname">
           {name}
-          {mine && s.seats[i].kind === 'human' && <small> ({t('game.you', undefined, lang)})</small>}
+          {mine && !p.bot && <small> ({t('game.you', undefined, lang)})</small>}
         </span>
+        {p.connected !== null && (
+          <i
+            class={`conn-dot ${p.connected ? 'on' : 'off'}`}
+            data-testid={`conn-${i}`}
+            data-connected={p.connected ? '1' : '0'}
+            title={t(p.connected ? 'online.connected' : 'online.disconnected', undefined, lang)}
+            role="img"
+            aria-label={t(p.connected ? 'online.connected' : 'online.disconnected', undefined, lang)}
+          />
+        )}
         {isBot && <span class="badge">{t('game.bot', undefined, lang)}</span>}
+        {p.covered && <span class="badge warn">{t('online.botCovering', undefined, lang)}</span>}
         {active && (
           <span class="turn-pill">
-            {s.thinking === i ? (
+            {m.thinking === i ? (
               <>
                 {t('game.thinking', undefined, lang)}
                 <span class="dots">
@@ -282,19 +300,19 @@ function PlayerPanel(props: {
                 </span>
               </>
             ) : (
-              t('game.yourTurn', undefined, lang)
+              t(m.mode === 'online' && !mine ? 'online.theirTurn' : 'game.yourTurn', undefined, lang)
             )}
           </span>
         )}
         <span class="spacer" />
         {!mine && (
-          <span class="handcount" title={t('game.handCount', { n: p.hand.length }, lang)}>
+          <span class="handcount" title={t('game.handCount', { n: p.handCount }, lang)}>
             <span class="minibacks">
-              {p.hand.slice(0, 5).map((c, k) => (
-                <img key={c.id} src={backUrl()} alt="" style={{ left: `${k * 7}px` }} />
+              {Array.from({ length: Math.min(p.handCount, 5) }, (_, k) => (
+                <img key={k} src={backUrl()} alt="" style={{ left: `${k * 7}px` }} />
               ))}
             </span>
-            <b data-testid={`handcount-${i}`}>{p.hand.length}</b>
+            <b data-testid={`handcount-${i}`}>{p.handCount}</b>
           </span>
         )}
       </div>
@@ -327,16 +345,16 @@ function backUrl(): string {
 
 /* ---------------------------------------------------------------- */
 
-function LogList({ s, lang }: { s: Session; lang: Lang }) {
+function LogList({ m, lang }: { m: TableModel; lang: Lang }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = ref.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [s.log.length]);
+  }, [m.log.length]);
   return (
     <div class="loglist" ref={ref} data-testid="log">
-      {s.log.map((l) => {
-        const f = formatEvent(l.ev, s.seats, lang);
+      {m.log.map((l) => {
+        const f = formatEvent(l.ev, (i) => m.players[i]?.name ?? '?', lang);
         return f ? (
           <div key={l.id} class={`logline ${f.tone}`}>
             {f.text}
@@ -347,29 +365,30 @@ function LogList({ s, lang }: { s: Session; lang: Lang }) {
   );
 }
 
-function PlayBanner({ s, lang }: { s: Session; lang: Lang }) {
-  const b = s.banner!;
-  const mineActor = b.actor === s.viewer;
+function PlayBanner({ m, lang }: { m: TableModel; lang: Lang }) {
+  const b = m.banner!;
+  const nm = (i: number) => m.players[i]?.name ?? '?';
+  const mineActor = b.actor === m.viewer;
   const target =
     b.target && b.target.player !== b.actor
-      ? ` → ${seatName(s.seats, b.target.player, lang)}${b.target.wafer !== undefined ? ' · ' + t('log.waferN', { n: b.target.wafer + 1 }, lang) : ''}`
+      ? ` → ${nm(b.target.player)}${b.target.wafer !== undefined ? ' · ' + t('log.waferN', { n: b.target.wafer + 1 }, lang) : ''}`
       : '';
   return (
     <div class={`banner ${mineActor ? 'from-bottom' : 'from-top'}`} key={b.id} aria-hidden="true">
       <Card kind={b.card} lang={lang} class="banner-card" />
       <div class="banner-text">
-        {seatName(s.seats, b.actor, lang)}
+        {nm(b.actor)}
         {target}
       </div>
     </div>
   );
 }
 
-function Handoff({ s, lang }: { s: Session; lang: Lang }) {
-  const name = seatName(s.seats, s.handoff!, lang);
+function Handoff({ m, lang }: { m: TableModel; lang: Lang }) {
+  const name = m.players[m.handoff!].name;
   return (
     <div class="overlay handoff" role="dialog" aria-modal="true">
-      <button class="handoff-card" data-testid="handoff" onClick={revealHand}>
+      <button class="handoff-card" data-testid="handoff" onClick={m.onReveal}>
         <h2>{t('handoff.title', { name }, 'zh-TW')}</h2>
         <h3>{t('handoff.title', { name }, 'en')}</h3>
         <p class="tap">{t('handoff.tap', undefined, lang)}</p>
@@ -379,10 +398,9 @@ function Handoff({ s, lang }: { s: Session; lang: Lang }) {
   );
 }
 
-function EndScreen({ s, lang }: { s: Session; lang: Lang }) {
-  const st = s.state;
-  const r = st.result!;
-  const names = r.winners.map((w) => seatName(s.seats, w, lang));
+function EndScreen({ m, lang }: { m: TableModel; lang: Lang }) {
+  const r = m.result!;
+  const names = r.winners.map((w) => m.players[w].name);
   useEffect(() => {
     sfx.play('win');
   }, []);
@@ -405,14 +423,15 @@ function EndScreen({ s, lang }: { s: Session; lang: Lang }) {
             </tr>
           </thead>
           <tbody>
-            {st.players.map((p, i) => {
+            {m.players.map((p, i) => {
               const win = r.winners.includes(i);
-              const bonus = countKind(p.hand, 'yearEndBonus');
+              // hands stay hidden online; the bonus is whatever the final score adds on top of the wafers
+              const bonus = Math.max(0, r.scores[i] - waferPoints(p.wafers));
               return (
                 <tr key={i} class={win ? 'win' : ''}>
                   <td>
                     {win && '🏆 '}
-                    {seatName(s.seats, i, lang)}
+                    {p.name}
                   </td>
                   <td>
                     {p.wafers.map((w) => `${w}/4`).join(' · ')}
@@ -421,7 +440,7 @@ function EndScreen({ s, lang }: { s: Session; lang: Lang }) {
                   {r.reason === 'score' && <td>+{bonus}</td>}
                   {r.reason === 'score' && (
                     <td>
-                      <b>{t('end.points', { n: scoreOf(st, i) }, lang)}</b>
+                      <b>{t('end.points', { n: r.scores[i] }, lang)}</b>
                     </td>
                   )}
                 </tr>
@@ -430,14 +449,54 @@ function EndScreen({ s, lang }: { s: Session; lang: Lang }) {
           </tbody>
         </table>
         <div class="end-buttons">
-          <button class="btn primary" data-testid="play-again" onClick={replay}>
-            {t('end.playAgain', undefined, lang)}
-          </button>
-          <button class="btn" onClick={quitGame}>
-            {t('end.lobby', undefined, lang)}
+          {m.onPlayAgain ? (
+            <button class="btn primary" data-testid="play-again" onClick={m.onPlayAgain}>
+              {t(m.mode === 'online' ? 'online.playAgain' : 'end.playAgain', undefined, lang)}
+            </button>
+          ) : (
+            <p class="note" data-testid="wait-host">
+              {t('online.waitHostAgain', undefined, lang)}
+            </p>
+          )}
+          <button class="btn" data-testid="end-leave" onClick={m.onQuit}>
+            {t(m.mode === 'online' ? 'online.leave' : 'end.lobby', undefined, lang)}
           </button>
         </div>
       </div>
     </div>
+  );
+}
+
+/* ---------------------------------------------------------------- */
+
+function useNow(active: boolean): number {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    if (!active) return;
+    setNow(Date.now());
+    const id = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(id);
+  }, [active]);
+  return now;
+}
+
+/** Countdown for the turn timer / the disconnected-player grace period. */
+function ClockChip({ clock, m, lang }: { clock: NonNullable<TableModel['clock']>; m: TableModel; lang: Lang }) {
+  const now = useNow(true);
+  if (clock.kind === 'bot') return null;
+  const left = Math.max(0, Math.ceil((clock.at - now) / 1000));
+  const name = m.players[clock.seat]?.name ?? '';
+  const mine = clock.seat === m.viewer;
+  const label =
+    clock.kind === 'timeout'
+      ? mine
+        ? t('online.timerYou', { n: left }, lang)
+        : t('online.timerOther', { name, n: left }, lang)
+      : t('online.takeoverIn', { name, n: left }, lang);
+  return (
+    <span class={`chip clock ${clock.kind} ${left <= 10 ? 'urgent' : ''}`} data-testid="clock" data-left={left} role="timer" aria-label={`${left} ${label}`}>
+      <span aria-hidden="true">⏱</span> <b>{left}</b>
+      <span class="long clock-label"> {label}</span>
+    </span>
   );
 }

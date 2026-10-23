@@ -1,15 +1,9 @@
 import type { GameEvent } from '../engine';
 import { cardName } from '../i18n/cards';
 import { t, type Lang } from '../i18n';
-import type { Seat } from './store';
-
-export function seatName(seats: Seat[], i: number, lang: Lang): string {
-  return t(seats[i].kind === 'human' ? 'lobby.name' : 'lobby.bot', { n: i + 1 }, lang);
-}
-
 /** Returns null for events that are not shown in the log. */
-export function formatEvent(e: GameEvent, seats: Seat[], lang: Lang): { text: string; tone: string } | null {
-  const n = (i: number) => seatName(seats, i, lang);
+export function formatEvent(e: GameEvent, name: (i: number) => string, lang: Lang): { text: string; tone: string } | null {
+  const n = name;
   const c = (k: Parameters<typeof cardName>[0]) => cardName(k, lang);
   switch (e.type) {
     case 'turnStart':
