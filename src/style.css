@@ -841,7 +841,7 @@ h3 {
 }
 .hand {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   justify-content: center;
   padding: 14px 0 2px;
   position: relative;
@@ -854,7 +854,7 @@ h3 {
   width: var(--cw);
 }
 .hand .hand-card + .hand-card {
-  margin-left: calc(max(0px, (var(--n, 5) * var(--cw) - 100%) / (var(--n, 5) - 1)) * -1);
+  margin-left: calc(max(0px, (var(--n, 5) * var(--cw) + (var(--n, 5) - 1) * 6px - 100%) / (var(--n, 5) - 1)) * -1);
 }
 .hand .hand-card.sel {
   z-index: 4;

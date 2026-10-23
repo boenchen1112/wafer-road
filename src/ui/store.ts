@@ -23,6 +23,8 @@ export interface Banner {
 }
 
 export interface Session {
+  /** changes for every new game (used as a view key) */
+  gameId: number;
   seats: Seat[];
   endMode: EndMode;
   state: GameState;
@@ -42,6 +44,7 @@ export interface Session {
 let session: Session | null = null;
 const listeners = new Set<() => void>();
 let logId = 1;
+let gameCounter = 1;
 let bannerId = 1;
 let botTimer: ReturnType<typeof setTimeout> | null = null;
 let bannerTimer: ReturnType<typeof setTimeout> | null = null;
@@ -85,6 +88,7 @@ export function startGame(seats: Seat[], endMode: EndMode, seed = defaultSeed())
   const state = createGame({ numPlayers: seats.length, endMode }, seed);
   const humans = humanSeats(seats);
   session = {
+    gameId: gameCounter++,
     seats,
     endMode,
     state,

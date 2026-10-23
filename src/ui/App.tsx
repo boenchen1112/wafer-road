@@ -27,7 +27,7 @@ export function App() {
     setPage(p);
     window.scrollTo(0, 0);
   };
-  if (session) return <GameView s={session} />;
+  if (session) return <GameView key={session.gameId} s={session} />;
   if (page === 'howto') return <HowTo back={() => go('lobby')} />;
   if (page === 'process') return <ProcessPage back={() => go('lobby')} />;
   return <Lobby go={(p) => go(p)} />;
