@@ -1,0 +1,23 @@
+{
+  "name": "wafer-road-server",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Wafer Road online multiplayer: Cloudflare Worker + one Durable Object per room",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run && vitest run -c vitest.workers.config.ts",
+    "test:unit": "vitest run",
+    "test:workers": "vitest run -c vitest.workers.config.ts"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@cloudflare/vitest-plugin": "^1.4.7",
+    "@cloudflare/workers-types": "^5.20261023.1",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5",
+    "wrangler": "^4.152.0"
+  }
+}
