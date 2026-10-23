@@ -56,11 +56,13 @@ export function needsPlayerTarget(k: CardKind): boolean {
 }
 
 /** Unsorted, deterministic deck list with ids 0..67. */
-export function buildDeck(): Card[] {
+export type DeckCounts = Record<CardKind, number>;
+
+export function buildDeck(counts: DeckCounts = DECK_COUNTS): Card[] {
   const deck: Card[] = [];
   let id = 0;
   for (const kind of KIND_ORDER) {
-    for (let i = 0; i < DECK_COUNTS[kind]; i++) deck.push({ id: id++, kind });
+    for (let i = 0; i < counts[kind]; i++) deck.push({ id: id++, kind });
   }
   return deck;
 }

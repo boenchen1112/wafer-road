@@ -18,7 +18,7 @@ export type CardKind =
   | 'yearEndBonus';
 
 export interface Card {
-  /** Unique id 0..67 within a game. */
+  /** Unique id within a game (0..deck size - 1). */
   id: number;
   kind: CardKind;
 }
@@ -29,6 +29,8 @@ export interface GameConfig {
   /** 2..5 */
   numPlayers: number;
   endMode: EndMode;
+  /** Card counts per kind; defaults to the printed deck (DECK_COUNTS). */
+  deckCounts?: Record<CardKind, number>;
 }
 
 export type WaferStep = 0 | 1 | 2 | 3 | 4;
