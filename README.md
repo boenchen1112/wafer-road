@@ -34,14 +34,14 @@ npm run preview   # 預覽建置結果
 
 ### 規則摘要
 
-- 每位玩家有 2 片晶圓（第 0 階），起手 4 張牌；牌堆共 68 張。
+- 每位玩家有 2 片晶圓（第 0 階），起手 4 張牌；牌堆共 68 張（數位版採用模擬平衡後的配比，見 [docs/BALANCE.md](docs/BALANCE.md)）。
 - 每回合：抽 1 張 → 打出 1 張牌**或**棄 1 張牌 → 手牌回到 4 張。
-- 製程卡只能打在**自己的**晶圓上，且必須是剛好的下一階：薄膜 ×12（0→1）、微影蝕刻 ×9（1→2）、摻雜 ×7（2→3）、金屬層 ×5（3→4，晶圓完成）；晶圓代工 ×3 為萬用卡。
-- 退回卡可打在任何玩家（含自己）的晶圓上，且晶圓必須剛好在該階：設備老舊 ×4（1→0）、曝光量錯誤 ×3（2→1）、離子佈植問題 ×2（3→2）。已完成的晶圓不受任何影響。
-- 事件：大停電 ×4（所有玩家；沒有發電機者所有晶圓倒退 1 步，有發電機者改棄 1 張發電機）、毒氣外洩 ×4（指定 1 名玩家倒退 1 步，有逃生通道則改棄 1 張）。
-- 災難：新進工程師 ×2（使對手棄 1 張發電機）、通道阻塞 ×2（使對手棄 1 張逃生通道）。
-- 保護：發電機 ×4、逃生通道 ×4，面朝上放在自己面前，可疊加，每張擋 1 次對應事件後棄置。
-- 功能：年終獎金 ×3 — 抽 2 張，然後打出 1 張再棄 1 張，或直接棄 2 張。
+- 製程卡只能打在**自己的**晶圓上，且必須是剛好的下一階：薄膜 ×19（0→1）、微影蝕刻 ×8（1→2）、摻雜 ×7（2→3）、金屬層 ×5（3→4，晶圓完成）；晶圓代工 ×2 為萬用卡。
+- 退回卡可打在任何玩家（含自己）的晶圓上，且晶圓必須剛好在該階：設備老舊 ×4（1→0）、曝光量錯誤 ×1（2→1）、離子佈植問題 ×1（3→2）。已完成的晶圓不受任何影響。
+- 事件：大停電 ×2（所有玩家；沒有發電機者所有晶圓倒退 1 步，有發電機者改棄 1 張發電機）、毒氣外洩 ×4（指定 1 名玩家倒退 1 步，有逃生通道則改棄 1 張）。
+- 災難：新進工程師 ×2（使對手棄 1 張發電機）、通道阻塞 ×4（使對手棄 1 張逃生通道）。
+- 保護：發電機 ×3、逃生通道 ×4，面朝上放在自己面前，可疊加，每張擋 1 次對應事件後棄置。
+- 功能：年終獎金 ×2 — 抽 2 張，然後打出 1 張再棄 1 張，或直接棄 2 張。
 - 結束方式：**限時**（預設）最先完成 1 片晶圓者獲勝；牌堆用完則進行最終回合（每人再一回合）並計分（第 1/2/3 階 = 2/3/4 分，兩片相加，手上每張年終獎金 +1 分）。**長局**：牌堆用完時重洗棄牌堆，直到有人完成 1 片晶圓。
 
 完整規則與卡牌圖鑑請見遊戲內的「如何遊玩」，以及依說明書整理的「製程原理」頁面。
@@ -98,14 +98,14 @@ Setup and deployment steps: **[docs/ONLINE.md](docs/ONLINE.md)**. Without a conf
 
 ### Rules summary
 
-- Each player has 2 wafers (step 0) and starts with 4 cards; the deck has 68 cards.
+- Each player has 2 wafers (step 0) and starts with 4 cards; the deck has 68 cards (the digital version uses simulation-balanced counts, see [docs/BALANCE.md](docs/BALANCE.md)).
 - Each turn: draw 1 → play 1 card **or** discard 1 card → hand is back to 4.
-- Process cards go on **your own** wafers and only as the exact next step: Thin Film ×12 (0→1), Photolithography & Etch ×9 (1→2), Doping ×7 (2→3), Metallization ×5 (3→4, wafer complete); Foundry ×3 is wild.
-- Regression cards may target any player's wafer (yours too) that is at exactly the required step: Aging Equipment ×4 (1→0), Exposure Error ×3 (2→1), Ion Implant Issue ×2 (3→2). Completed wafers are immune to everything.
-- Events: Blackout ×4 (every player; without a Generator all wafers go back 1 step, with one you discard a Generator instead), Toxic Gas Leak ×4 (one player goes back 1 step unless they discard an Emergency Exit).
-- Disasters: Rookie Engineer ×2 (opponent discards a Generator), Blocked Exit ×2 (opponent discards an Emergency Exit).
-- Protection: Generator ×4, Emergency Exit ×4 — placed face-up, stackable, each blocks one matching event then is discarded.
-- Function: Year-End Bonus ×3 — draw 2, then play 1 and discard 1, or discard 2.
+- Process cards go on **your own** wafers and only as the exact next step: Thin Film ×19 (0→1), Photolithography & Etch ×8 (1→2), Doping ×7 (2→3), Metallization ×5 (3→4, wafer complete); Foundry ×2 is wild.
+- Regression cards may target any player's wafer (yours too) that is at exactly the required step: Aging Equipment ×4 (1→0), Exposure Error ×1 (2→1), Ion Implant Issue ×1 (3→2). Completed wafers are immune to everything.
+- Events: Blackout ×2 (every player; without a Generator all wafers go back 1 step, with one you discard a Generator instead), Toxic Gas Leak ×4 (one player goes back 1 step unless they discard an Emergency Exit).
+- Disasters: Rookie Engineer ×2 (opponent discards a Generator), Blocked Exit ×4 (opponent discards an Emergency Exit).
+- Protection: Generator ×3, Emergency Exit ×4 — placed face-up, stackable, each blocks one matching event then is discarded.
+- Function: Year-End Bonus ×2 — draw 2, then play 1 and discard 1, or discard 2.
 - Ending: **Timed** (default) — first to complete a wafer wins; if the deck runs out there is a final round (everyone gets one more turn) and scoring (step 1/2/3 = 2/3/4 pts, both wafers summed, +1 per Year-End Bonus in hand). **Long game** — the discard pile is reshuffled when the deck runs out, until someone completes a wafer.
 
 The full rules and a card reference are in the in-game "How to Play" page, plus a "Process Principles" page based on the booklet.
