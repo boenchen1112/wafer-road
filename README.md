@@ -53,7 +53,7 @@ npm run preview   # 預覽建置結果
 - 遊戲名稱：晶圓之路
 - 遊戲類型：教育策略卡牌遊戲
 - 設計主題：半導體製程
-- 設計團隊：龔書宏、張容瑄、黃昱誠、陳博恩、沈虹（半導體智程）
+- 設計團隊：龔書宏、張容瑄、黃昱誠、陳博恩、沈虹
 - 特別感謝：清華大學 洪秉驊
 - 贊助單位：科林研發 (Lam Research) 半導體AI科學營
 
@@ -106,7 +106,7 @@ The full rules and a card reference are in the in-game "How to Play" page, plus 
 ### Credits
 
 - Game: 晶圓之路 (Wafer Road) — educational strategy card game, theme: semiconductor processes
-- Design team: 龔書宏, 張容瑄, 黃昱誠, 陳博恩 (Daniel Chen), 沈虹 (半導體智程)
+- Design team: 龔書宏, 張容瑄, 黃昱誠, 陳博恩 (Daniel Chen), 沈虹
 - Special thanks: National Tsing Hua University — 洪秉驊
 - Sponsor: Lam Research (科林研發) Semiconductor AI Science Camp
 
