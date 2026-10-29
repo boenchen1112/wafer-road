@@ -122,6 +122,28 @@ export function Lobby({ go, initialTab = 'local' }: { go: (p: 'howto' | 'process
           {t('nav.process', undefined, lang)}
         </button>
       </nav>
+      <Credits />
     </div>
+  );
+}
+
+export function Credits() {
+  const lang = useLang();
+  const rows = ['name', 'type', 'theme', 'team', 'thanks', 'sponsor'] as const;
+  return (
+    <section class="credits" data-testid="credits">
+      <h2>{t('credits.title', undefined, lang)}</h2>
+      <p>{t('credits.intro', undefined, lang)}</p>
+      <p class="credits-meta">{t('credits.meta', undefined, lang)}</p>
+      <dl>
+        {rows.map((k) => (
+          <div key={k}>
+            <dt>{t(`credits.${k}`, undefined, lang)}</dt>
+            <dd>{t(`credits.${k}V`, undefined, lang)}</dd>
+          </div>
+        ))}
+      </dl>
+      <p class="credits-note">{t('credits.sponsorNote', undefined, lang)}</p>
+    </section>
   );
 }

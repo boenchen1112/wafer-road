@@ -247,6 +247,45 @@ h3 {
   flex: 1;
 }
 
+.credits {
+  margin-top: 22px;
+  padding: 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.credits h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  color: var(--mint);
+}
+.credits p {
+  margin: 0 0 8px;
+}
+.credits-meta,
+.credits-note {
+  color: var(--muted);
+}
+.credits dl {
+  margin: 10px 0;
+}
+.credits dl > div {
+  display: flex;
+  gap: 12px;
+  padding: 4px 0;
+  border-top: 1px solid var(--line);
+}
+.credits dt {
+  flex: 0 0 5.5em;
+  color: var(--muted);
+}
+.credits dd {
+  margin: 0;
+  font-weight: 600;
+}
+
 /* ---------- docs ---------- */
 .doc-title {
   font-size: 32px;
